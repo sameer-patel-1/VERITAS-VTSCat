@@ -231,6 +231,15 @@ def process_files(heasarc_dir):
     a = [shutil.rmtree(d) for d in data_dir] # remove data directories (except /sources) after restructring is complete
     return None
 
+def restructure_to_heasarc(repo_dir, heasarc_dir):
+
+    make_copy(repo_dir, heasarc_dir)
+    rename_sources(heasarc_dir)
+    rem_paper(heasarc_dir)
+    process_files(heasarc_dir)
+    
+    return "Restructuring completed successfully!"
+
 # =============================================================================
 # Main Program
 # =============================================================================
@@ -239,7 +248,4 @@ if __name__ == "__main__":
     repo_dir = repo.working_tree_dir + "/" # establish pwd as the git repo
     heasarc_dir = repo_dir+"heasarc/" # base dir for heasarc files/folders
 
-    make_copy(repo_dir, heasarc_dir)
-    rename_sources(heasarc_dir)
-    rem_paper(heasarc_dir)
-    process_files(heasarc_dir)
+    restructure_to_heasarc(repo_dir, heasarc_dir)
