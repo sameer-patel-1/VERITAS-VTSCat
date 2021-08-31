@@ -1,7 +1,13 @@
 import os
 import git
 import glob
+import yaml
 import shutil
+
+def load_yaml(file):
+    stream = open(file, 'r')
+    file = yaml.load(stream, Loader=yaml.FullLoader)
+    return file
 
 def list_dir(directory): # default os.listdir returns only basepath
     return [os.path.join(directory, file) for file in os.listdir(directory)]
@@ -34,6 +40,8 @@ def rename_sources(heasarc_dir):
 def rem_paper(heasarc_dir): # remove specific paper directory or subdirectory
     paths = []
     paths.append('2021/2021arXiv210601386A') # contains non-standard data; remove for now
+    paths.append('2017/2017PhRvD..95h2001A') # contains non data for designated sources in info.yaml; remove for now
+    paths
     # paths.append('2011/2011ApJ...738..25A/data') # no longer required
     # paths.append('2013/2013ApJ...779..150A/data') # no longer required
     # paths.append('2016/2016ApJ...819..156B/data') # no longer required
@@ -58,7 +66,8 @@ def rem_non_ver_files():
     '''
     files = sorted(glob.glob("./**/*.*", recursive=True))
     non_ver_files = [i for i in files if 'VER-' not in i]
-    non_ver_files = [i for i in non_ver_files if '.fits' not in i or '.FITS' not in i]
+    non_ver_files = [i for i in non_ver_files if 'info.yaml' not in i] # don't remove info.yaml files
+    non_ver_files = [i for i in non_ver_files if '.fits' not in i or '.FITS' not in i] # don't remove fits files
 
     a = [os.remove(file) for file in non_ver_files if non_ver_files]
 
@@ -180,15 +189,17 @@ def load_sources():
     '''
     Returns a (non-repeated) list of sources in the paper directory
     '''
-    src_lst = []
-    yaml_files = glob.glob("*.yaml")
-    for yaml_file in yaml_files:
-        split_fnm = yaml_file.split(".")[0] # removes .yaml from file name
-        split_fnm = split_fnm.split("-")[1] # isolates the src_id in the file name
-        src_id = int(split_fnm)
-        src_lst.append(src_id)
-    src_lst = list(set(src_lst))
-    # if not src_lst: print(os.getcwd())
+ 
+    # if os.path.basename(os.getcwd()) == '2016ApJ...831..113A':
+    #     return 'stop'
+    try:
+        src_lst = load_yaml('info.yaml')['source_id']
+    except KeyError:
+        src_lst = []
+        print('The following entry will not be translated into HEASARC as their info.yaml contains no source_ids')
+        print(os.path.basename(os.getcwd()))
+        # os.remove(os.getcwd())
+    
     return sorted(src_lst)
 
 def get_src_files(src_id):
@@ -204,8 +215,8 @@ def move_dirs(heasarc_dir, paper_dir, src_lst):
 
             os.makedirs(dest_path, exist_ok=True) # create the src_id/paper_dir directory
             file_lst = glob.glob("./**/*.*", recursive=True) # so the destination dir is flattened
-            file_lst = [i for i in file_lst if "VER-%d" % src_id in i] # just to be safe
-            a = [shutil.move(file, dest_path) for file in file_lst]
+            file_lst = [i for i in file_lst if "VER-%d" % src_id in i] # for that source_id
+            cp_files = [shutil.copy(file, dest_path) for file in file_lst]
     return None
 
 def process_files(heasarc_dir):
@@ -226,6 +237,8 @@ def process_files(heasarc_dir):
             change_ecsv_format()
 
             src_lst = load_sources()
+            # if src_lst == 'stop':
+            #     return 'stopped'
             move_dirs(heasarc_dir, paper_dir, src_lst)
     
     a = [shutil.rmtree(d) for d in data_dir] # remove data directories (except /sources) after restructring is complete
@@ -237,15 +250,14 @@ def restructure_to_heasarc(repo_dir, heasarc_dir):
     rename_sources(heasarc_dir)
     rem_paper(heasarc_dir)
     process_files(heasarc_dir)
-    
+
     return "Restructuring completed successfully!"
 
-# =============================================================================
-# Main Program
-# =============================================================================
-if __name__ == "__main__":
+def run_restructure():
     repo = git.Repo(".", search_parent_directories=True)
     repo_dir = repo.working_tree_dir + "/" # establish pwd as the git repo
     heasarc_dir = repo_dir+"heasarc/" # base dir for heasarc files/folders
 
+    os.chdir(repo_dir+'scripts')
     restructure_to_heasarc(repo_dir, heasarc_dir)
+    return None
