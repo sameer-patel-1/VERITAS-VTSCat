@@ -17,17 +17,17 @@ from collections import Counter
 
 def get_lists(repo_dir, source_dir, undetected=False):
         source_glob = glob.glob(source_dir+"VER-*.yaml")
-        data_glob = sorted(glob.glob(repo_dir+"/20*/*/VER-*.yaml"))
+        data_glob = sorted(glob.glob(repo_dir+"/20*/*/VER-*.yaml"), key=len)
 
         if undetected: # although we don't require VER names for undetected sources
-            source_lst = sorted([source_glob[i] for i in range(len(source_glob)) if 300000 > float(os.path.basename(source_glob[i]).split('.')[0].split('-')[1]) > 999]) # only non-detections which have 300000 > source id > 999
+            source_lst = sorted([source_glob[i] for i in range(len(source_glob)) if 300000 > float(os.path.basename(source_glob[i]).split('.')[0].split('-')[1]) > 999], key=len) # only non-detections which have 300000 > source id > 999
 
-            data_lst = [data_glob[i] for i in range(len(data_glob)) if 300000 > float(os.path.basename(data_glob[i]).split('.')[0].split('-')[1]) > 999] # only 300000 > src_ids > 999
+            data_lst = sorted([data_glob[i] for i in range(len(data_glob)) if 300000 > float(os.path.basename(data_glob[i]).split('.')[0].split('-')[1]) > 999], key=len) # only 300000 > src_ids > 999
 
         else:
-            source_lst = sorted([source_glob[i] for i in range(len(source_glob)) if float(os.path.basename(source_glob[i]).split('.')[0].split('-')[1]) < 999]) # ignore non-detections which have source id > 999
+            source_lst = sorted([source_glob[i] for i in range(len(source_glob)) if float(os.path.basename(source_glob[i]).split('.')[0].split('-')[1]) < 999], key=len) # ignore non-detections which have source id > 999
 
-            data_lst = [data_glob[i] for i in range(len(data_glob)) if float(os.path.basename(data_glob[i]).split('.')[0].split('-')[1]) < 999] # remove src_ids > 999
+            data_lst = sorted([data_glob[i] for i in range(len(data_glob)) if float(os.path.basename(data_glob[i]).split('.')[0].split('-')[1]) < 999], key=len) # remove src_ids > 999
 
         return source_lst, data_lst
 

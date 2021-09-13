@@ -239,7 +239,7 @@ def create_src_dict(repo_dir, source_dir, df, src_cnt, undetected=False): # crea
         src_dict['simbad_ra'] = src_dict['simbad_dec'] = np.nan*u.deg
     return src_dict
 
-def create_src_cat(source_dir, data_dir, undetected=False):
+def create_src_cat(repo_dir, source_dir, data_dir, undetected=False):
     src_files, data_files = get_lists(repo_dir, source_dir, undetected)
     lst_dicts = []
 
@@ -597,6 +597,8 @@ def build_catalog(undetected=False):
     else:data_dir = heasarc_dir+'detected_data/' 
     
     os.chdir(repo_dir+'scripts')
+    create_src_cat(repo_dir, source_dir, data_dir, undetected=undetected)
+    print("Succesfully built source catalog!")
     create_data_cat(data_dir)
-    print("Succesfully built catalog!")
+    print("Succesfully built data catalogs!")
     return None
