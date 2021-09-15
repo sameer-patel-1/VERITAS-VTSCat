@@ -41,7 +41,7 @@ def rem_paper(heasarc_dir): # remove specific paper directory or subdirectory
     paths = []
     paths.append('2021/2021arXiv210601386A') # contains non-standard data; remove for now
     paths.append('2017/2017PhRvD..95h2001A') # contains non data for designated sources in info.yaml; remove for now
-    paths
+    # paths
     # paths.append('2011/2011ApJ...738..25A/data') # no longer required
     # paths.append('2013/2013ApJ...779..150A/data') # no longer required
     # paths.append('2016/2016ApJ...819..156B/data') # no longer required
@@ -189,16 +189,11 @@ def load_sources():
     '''
     Returns a (non-repeated) list of sources in the paper directory
     '''
- 
-    # if os.path.basename(os.getcwd()) == '2016ApJ...831..113A':
-    #     return 'stop'
     try:
         src_lst = load_yaml('info.yaml')['source_id']
     except KeyError:
         src_lst = []
-        print('The following entry will not be translated into HEASARC as their info.yaml contains no source_ids')
-        print(os.path.basename(os.getcwd()))
-        # os.remove(os.getcwd())
+        print('%s will not be translated into HEASARC as its info.yaml contains no source_ids' % os.path.basename(os.getcwd()))
     
     return sorted(src_lst)
 
@@ -237,8 +232,6 @@ def process_files(heasarc_dir):
             change_ecsv_format()
 
             src_lst = load_sources()
-            # if src_lst == 'stop':
-            #     return 'stopped'
             move_dirs(heasarc_dir, paper_dir, src_lst)
     
     a = [shutil.rmtree(d) for d in data_dir] # remove data directories (except /sources) after restructring is complete
