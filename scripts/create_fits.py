@@ -1,10 +1,8 @@
 import git
 import yaml
 import glob
-import shutil
 import os
-import re
-from collections import OrderedDict
+import tarfile
 import pandas as pd
 import numpy as np
 
@@ -172,17 +170,6 @@ def get_data_header(data_type, data_file, src_id, ads_paper, source_dir):
 def chk_header(hdu):
     hdr = hdu.header
     for hdr_key in list(hdr):
-        val = hdr[hdr_key]
-        try:
-            assert len(hdr_key) <= 8 # if not, astropy adds 'HIERARCH' prefix which Antara doesn't want
-        except AssertionError:
-            print('Shorten the header name %s' % hdr_key)
-
-        try:
-            assert len(hdr.comments[hdr_key]) <= 47 # if not, it will get truncated!
-        except AssertionError:
-            print('Shorten the comment size of %s' % val)
-
         if hdr_key != 'OBS_ID': # this wil be empty since Antara will fill out later
             try:
                 assert hdr.comments[hdr_key] != '' # should not be blank
@@ -324,8 +311,8 @@ def get_col_names(data_dir): # just to get a list of all SED and LC datafile col
 
     return lc_cols, sed_cols
 
-def get_data_files(data_type): # should be inside the folder
-    data_files = [i for i in sorted(glob.glob("*.ecsv")) if data_type in i]
+def get_data_files(data_type, file_type): # should be inside the folder
+    data_files = [i for i in sorted(glob.glob("*.%s" % file_type)) if data_type in i]
 
     if not data_files:return []
     else: return data_files
@@ -333,7 +320,7 @@ def get_data_files(data_type): # should be inside the folder
 def merge_fits(data_type, src_id, ads_paper, source_dir):
     # print("Currently in %s/%s" % (src_id, os.path.basename(ads_paper)))
 
-    data_files = get_data_files(data_type)
+    data_files = get_data_files(data_type, 'ecsv')
 
     if not data_files :print("No %s files found in VER-%s/%s" % (data_type, src_id, os.path.basename(ads_paper)))
 
@@ -350,10 +337,35 @@ def merge_fits(data_type, src_id, ads_paper, source_dir):
 
     return None
 
-def cleanup_datafiles(data_type):
-    data_files = get_data_files(data_type)
+def cleanup_datafiles(data_type, file_type):
+    data_files = get_data_files(data_type, file_type)
     if data_files:[os.remove(i) for i in data_files]
     return None
+
+def compress(data_type, output_file="archive.tar.gz", output_dir='', root_dir='.', items=[]):
+    """compress dirs.
+
+    KWArgs
+    ------
+    output_file : str, default ="archive.tar.gz"
+    output_dir : str, default = ''
+        absolute path to output
+    root_dir='.',
+        absolute path to input root dir
+    items : list
+        list of dirs/items relative to root dir
+
+    """
+    # print(items)
+    # os.chdir(root_dir)
+    if items == []:
+        print("No %s images in %s" % (data_type, root_dir))
+        return None
+    else:
+        with tarfile.open(os.path.join(output_dir, output_file), "w:gz") as tar:
+            for item in items:
+                tar.add(item, arcname=item)
+        return None
 
 def merge_main(data_type, data_dir, source_dir):
     dir_list = sorted([d for d in list_dir(data_dir) if os.path.isdir(d)], key=sort_source)
@@ -366,17 +378,17 @@ def merge_main(data_type, data_dir, source_dir):
         for ads_paper in paper_dirs:
             os.chdir(ads_paper)
             merge_fits(data_type, src_id, ads_paper, source_dir)
-            cleanup_datafiles(data_type)
+            cleanup_datafiles(data_type, 'ecsv')
+
+            compress(data_type, output_file="%s-%s_ql.tar.gz" % (os.path.basename(ver_x),data_type), output_dir=ads_paper, root_dir=ads_paper, items=get_data_files(data_type, 'png'))
+            cleanup_datafiles(data_type, 'png')
+
 
     print('All %s FITS files successfully created!' % data_type)
     # for ads_paper in paper_dirs:
     return None
 
-
-# =============================================================================
-# Main Program
-# =============================================================================
-if __name__ == "__main__":
+def make_fits():
     repo = git.Repo(".", search_parent_directories=True)
     repo_dir = repo.working_tree_dir + "/" # establish pwd as the git repo
     heasarc_dir = repo_dir+"heasarc/" # base dir for heasarc files/folders
@@ -388,3 +400,4 @@ if __name__ == "__main__":
     # lc_cols, sed_cols = get_col_names(data_dir)
     merge_main('lc', data_dir, source_dir)
     merge_main('sed', data_dir, source_dir)
+    return None
