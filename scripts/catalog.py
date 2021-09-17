@@ -239,7 +239,10 @@ def create_src_dict(repo_dir, source_dir, df, src_cnt, undetected=False): # crea
         src_dict['simbad_ra'] = src_dict['simbad_dec'] = np.nan*u.deg
     return src_dict
 
-def create_src_cat(repo_dir, source_dir, data_dir, undetected=False):
+def create_src_cat(repo_dir, source_dir, data_dir):
+    if 'undetected_data' in data_dir:undetected=True
+    else:undetected=False
+
     src_files, data_files = get_lists(repo_dir, source_dir, undetected)
     lst_dicts = []
 
@@ -249,10 +252,8 @@ def create_src_cat(repo_dir, source_dir, data_dir, undetected=False):
         src_cnt = get_obs_count(data_dir,os.path.basename(file).split(".")[0])
         src_dict = create_src_dict(repo_dir, source_dir, df, src_cnt, undetected)
         lst_dicts.append(src_dict)
-    # print('getting here')
     t = create_table(lst_dicts)
     write_tables(t, data_dir+'src_cat')
-    # print(os.getcwd())
     print("Created source catalog table sucessfully!")
     return None
 
@@ -573,7 +574,7 @@ def create_data_cat(data_dir):
     for src_dir in data_directories:
         paper_dir_lst = get_paper_dir(src_dir) # contains paper directories in src_dir
         for paper_dir in paper_dir_lst:
-            print(paper_dir)
+            print(paper_dir.split('/')[-2]+"/"+paper_dir.split('/')[-1])
             yaml_lst = get_yaml_list(paper_dir) # contains yaml files in paper_dir
             if not yaml_lst: # no data tables to create
                 continue
@@ -587,18 +588,11 @@ def create_data_cat(data_dir):
                 os.remove(yaml_file)
     return None
 
-def build_catalog(undetected=False):
-    repo = git.Repo(".", search_parent_directories=True)
-    repo_dir = repo.working_tree_dir + "/" # establish pwd as the git repo
-    heasarc_dir = repo_dir+"heasarc/" # base dir for heasarc files/folders
-    source_dir = heasarc_dir+"sources/"
+def build_catalog(repo_dir, source_dir, data_dir):
 
-    if undetected:data_dir = heasarc_dir+'undetected_data/' 
-    else:data_dir = heasarc_dir+'detected_data/' 
-    
-    os.chdir(repo_dir+'scripts')
-    create_src_cat(repo_dir, source_dir, data_dir, undetected=undetected)
+    create_src_cat(repo_dir, source_dir, data_dir)
     print("Succesfully built source catalog!")
     create_data_cat(data_dir)
     print("Succesfully built data catalogs!")
+    
     return None

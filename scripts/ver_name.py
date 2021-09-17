@@ -208,12 +208,3 @@ def get_ver_names(repo_dir, source_dir):
     ver_names = chk_names(src_lst, ver_names)
     print("Generated VERITAS source names successfully!")
     return ver_names
-
-def gen_ver_names():
-    repo = git.Repo(".", search_parent_directories=True)
-    repo_dir = repo.working_tree_dir + "/" # establish pwd as the git repo
-    heasarc_dir = repo_dir+"heasarc/" # base dir for heasarc files/folders
-    source_dir = heasarc_dir+"sources/"
-
-    ver_names = get_ver_names(repo_dir, source_dir)
-    return ver_names

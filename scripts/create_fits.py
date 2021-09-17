@@ -39,6 +39,8 @@ def get_src_data(src_id, field, source_dir):
             if field == 'pos_ra':return Angle('17h46m41.01487s').degree
             if field == 'pos_dec':return Angle('-28d38m30.5345s').degree
             print('Setting RA/DEC for src_id = 175 manually...')
+
+        if src_id>999:return None # undetected sources have no VERITAS name
         else:
             print('Check source file VER-%d for %s entry' % (src_id, field))
     val = df[field][0]
@@ -322,7 +324,7 @@ def merge_fits(data_type, src_id, ads_paper, source_dir):
 
     data_files = get_data_files(data_type, 'ecsv')
 
-    if not data_files :print("No %s files found in VER-%s/%s" % (data_type, src_id, os.path.basename(ads_paper)))
+    if not data_files:print("No %s files found in VER-%s/%s" % (data_type, src_id, os.path.basename(ads_paper)))
 
     else:
         main_hdu = get_main_hdu(data_type, src_id, ads_paper, source_dir)
@@ -359,7 +361,7 @@ def compress(data_type, output_file="archive.tar.gz", output_dir='', root_dir='.
     # print(items)
     # os.chdir(root_dir)
     if items == []:
-        print("No %s images in %s" % (data_type, root_dir))
+        # print("No %s images in %s" % (data_type, root_dir))
         return None
     else:
         with tarfile.open(os.path.join(output_dir, output_file), "w:gz") as tar:
@@ -388,16 +390,13 @@ def merge_main(data_type, data_dir, source_dir):
     # for ads_paper in paper_dirs:
     return None
 
-def make_fits():
-    repo = git.Repo(".", search_parent_directories=True)
-    repo_dir = repo.working_tree_dir + "/" # establish pwd as the git repo
-    heasarc_dir = repo_dir+"heasarc/" # base dir for heasarc files/folders
-    source_dir = heasarc_dir+"sources/"
-
-    data_dir = heasarc_dir+'detected_data/'
-
-    os.chdir(repo_dir+'scripts')
+def make_fits(source_dir, data_dir):
     # lc_cols, sed_cols = get_col_names(data_dir)
     merge_main('lc', data_dir, source_dir)
     merge_main('sed', data_dir, source_dir)
+    
+    if not 'undetected_data' in data_dir:
+        os.remove(data_dir+'VER-146/2014ApJ...783...16A/VER-146-1-extension-table.ecsv')
+        os.remove(data_dir+'VER-146/2018ApJ...867L..19A/VER-146-1-spectralFits-table.ecsv')
+        os.remove(data_dir+'VER-53/2020ApJ...891..170V/VER-53-1-spectralFits-table.ecsv')
     return None

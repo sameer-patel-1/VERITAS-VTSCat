@@ -243,14 +243,5 @@ def restructure_to_heasarc(repo_dir, heasarc_dir):
     rename_sources(heasarc_dir)
     rem_paper(heasarc_dir)
     process_files(heasarc_dir)
-
-    return "Restructuring completed successfully!"
-
-def run_restructure():
-    repo = git.Repo(".", search_parent_directories=True)
-    repo_dir = repo.working_tree_dir + "/" # establish pwd as the git repo
-    heasarc_dir = repo_dir+"heasarc/" # base dir for heasarc files/folders
-
-    os.chdir(repo_dir+'scripts')
-    restructure_to_heasarc(repo_dir, heasarc_dir)
+    print("Restructuring completed successfully!")
     return None

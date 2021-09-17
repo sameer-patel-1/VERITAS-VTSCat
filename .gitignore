@@ -3,3 +3,7 @@ tmp
 *.log
 *.synctex.gz
 .DS_Store
+scripts/__pycache__/catalog.cpython-39.pyc
+scripts/__pycache__/create_fits.cpython-39.pyc
+scripts/__pycache__/restructure.cpython-39.pyc
+scripts/__pycache__/ver_name.cpython-39.pyc
