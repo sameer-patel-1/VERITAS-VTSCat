@@ -32,3 +32,5 @@ for data_dir in data_dirs:
     catalog.build_catalog(repo_dir, source_dir, data_dir)
 
     create_fits.make_fits(source_dir, data_dir)
+
+    print("Everything is done. Don\'t forget to compress the detected data and send it to HEASARC!")

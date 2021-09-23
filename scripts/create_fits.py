@@ -114,7 +114,7 @@ def get_meta_data(data_file, field):
     meta = pd.json_normalize(file.meta, sep='_')
     try:
         if type(meta[field][0]) is list: # because we only want strings
-            meta[field][0] = ';'.join(meta['field'][0])
+            meta[field][0] = '; '.join(meta['field'][0])
         return meta[field][0]
     except KeyError:
         return None
@@ -344,6 +344,15 @@ def cleanup_datafiles(data_type, file_type):
     if data_files:[os.remove(i) for i in data_files]
     return None
 
+def cleanup_ql_no_data(data_type):
+    data_files = sorted(glob.glob("*.ecsv"))
+    data_files = [i for i in data_files if 'sed' in i or 'lc' in i]
+    if not data_files:
+        ql_files = sorted(glob.glob("*.tar.gz"))
+        ql_files = [i for i in ql_files if data_type in i]
+        c = [os.remove(i) for i in ql_files]
+    return None
+
 def compress(data_type, output_file="archive.tar.gz", output_dir='', root_dir='.', items=[]):
     """compress dirs.
 
@@ -384,6 +393,7 @@ def merge_main(data_type, data_dir, source_dir):
 
             compress(data_type, output_file="%s-%s_ql.tar.gz" % (os.path.basename(ver_x),data_type), output_dir=ads_paper, root_dir=ads_paper, items=get_data_files(data_type, 'png'))
             cleanup_datafiles(data_type, 'png')
+            cleanup_ql_no_data(data_type)
 
 
     print('All %s FITS files successfully created!' % data_type)

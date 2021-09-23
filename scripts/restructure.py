@@ -3,6 +3,9 @@ import git
 import glob
 import yaml
 import shutil
+import pandas as pd
+from astropy.io import ascii
+from astropy.table import QTable, Table
 
 def load_yaml(file):
     stream = open(file, 'r')
@@ -62,7 +65,7 @@ def isint(fnm):
 
 def rem_non_ver_files():
     '''
-    Remove files which don't contain 'VER' in them'; but keep fits files since they may contain veritas skymaps
+    Remove files which don't contain 'VER' in them; but keep fits files since they may contain veritas skymaps
     '''
     files = sorted(glob.glob("./**/*.*", recursive=True))
     non_ver_files = [i for i in files if 'VER-' not in i]
@@ -96,6 +99,25 @@ def rem_nosrc_ecsv():
                 int(split_lst[1])
             except ValueError:
                 os.remove(file)
+    return None
+
+def rem_non_ver_data():
+    '''
+    Remove datafiles (LC/SED) which contain data from multiple telescopes in them since HEASARC needs only VERITAS data
+    '''
+    files = sorted(glob.glob("*.ecsv"))
+    files = [i for i in files if 'sed' in i or 'lc' in i]
+
+    if files:
+        for file in files:
+            data = Table.read(file, format='ascii.ecsv')
+            meta = pd.json_normalize(data.meta, sep='_')
+            try:
+                telescope = meta['telescope'][0]
+                if len(telescope.split(',')) > 1: # meaning data from more than one telescope
+                    os.remove(file)
+            except KeyError:
+                pass
     return None
 
 def rename_figures(paper_dir):
@@ -226,6 +248,8 @@ def process_files(heasarc_dir):
             rem_non_ver_files()
             rem_non_skymap_fits()
             rem_nosrc_ecsv()
+            print(paper_dir)
+            rem_non_ver_data()
             rename_figures(paper_dir)
             rename_skymap()
             rename_yaml()
